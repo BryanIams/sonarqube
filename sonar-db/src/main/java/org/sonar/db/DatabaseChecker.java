@@ -58,7 +58,7 @@ public class DatabaseChecker implements Startable {
   @Override
   public void start() {
     try {
-      checkMinDatabaseVersion();
+      //checkMinDatabaseVersion();
 
       // additional checks
       if (H2.ID.equals(db.getDialect().getId())) {

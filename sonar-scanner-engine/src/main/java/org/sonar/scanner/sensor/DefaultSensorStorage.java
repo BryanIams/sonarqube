@@ -307,9 +307,9 @@ public class DefaultSensorStorage implements SensorStorage {
   private static void validateMaxLine(Map<Integer, Integer> m, InputFile inputFile) {
     int maxLine = inputFile.lines();
 
-    for (int l : m.keySet()) {
-      if (l > maxLine) {
-        throw new IllegalStateException(String.format("Can't create measure for line %d for file '%s' with %d lines", l, inputFile.absolutePath(), maxLine));
+    for (int line : m.keySet()) {
+      if (line > maxLine) {
+        throw new IllegalStateException(String.format("Can't create measure for line %d for file '%s' with %d lines", line, inputFile.absolutePath(), maxLine));
       }
     }
   }

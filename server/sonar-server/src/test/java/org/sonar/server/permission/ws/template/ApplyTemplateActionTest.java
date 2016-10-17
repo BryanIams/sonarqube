@@ -193,8 +193,8 @@ public class ApplyTemplateActionTest extends BasePermissionWsTest<ApplyTemplateA
   }
 
   private void assertTemplate1AppliedToProject() {
-    assertThat(selectProjectPermissionGroups(project, UserRole.ADMIN)).containsExactly(group1.getName());
-    assertThat(selectProjectPermissionGroups(project, UserRole.USER)).containsExactly(group2.getName());
+    assertThat(selectProjectPermissionGroups(project, UserRole.ADMIN)).containsExactly(group1.getId());
+    assertThat(selectProjectPermissionGroups(project, UserRole.USER)).containsExactly(group2.getId());
     assertThat(selectProjectPermissionUsers(project, UserRole.ADMIN)).isEmpty();
     assertThat(selectProjectPermissionUsers(project, UserRole.CODEVIEWER)).containsExactly(user1.getLogin());
     assertThat(selectProjectPermissionUsers(project, UserRole.ISSUE_ADMIN)).containsExactly(user2.getLogin());
@@ -225,9 +225,9 @@ public class ApplyTemplateActionTest extends BasePermissionWsTest<ApplyTemplateA
     db.commit();
   }
 
-  private List<String> selectProjectPermissionGroups(ComponentDto project, String permission) {
+  private List<Long> selectProjectPermissionGroups(ComponentDto project, String permission) {
     PermissionQuery query = PermissionQuery.builder().setPermission(permission).setComponentUuid(project.uuid()).build();
-    return db.getDbClient().groupPermissionDao().selectGroupNamesByPermissionQuery(db.getSession(), query);
+    return db.getDbClient().groupPermissionDao().selectGroupIdsByQuery(db.getSession(), db.getDefaultOrganization().getUuid(), query);
   }
 
   private List<String> selectProjectPermissionUsers(ComponentDto project, String permission) {

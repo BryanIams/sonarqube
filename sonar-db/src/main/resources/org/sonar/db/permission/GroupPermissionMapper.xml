@@ -53,10 +53,14 @@
     ) groups
   </select>
 
-  <select id="selectGroupNamesByPermissionQuery" parameterType="map" resultType="string">
-    select distinct gr.name, lower(gr.name), gr.group_id
-    <include refid="groupsByQuery" />
-    order by lower(gr.name), gr.name, gr.group_id
+  <select id="selectGroupIdsByQuery" parameterType="map" resultType="long">
+    select results.group_id
+    from
+    (
+      select distinct gr.name, lower(gr.name), gr.group_id as group_id
+      <include refid="groupsByQuery" />
+      order by lower(gr.name), gr.name, gr.group_id
+    ) results
   </select>
 
   <select id="countGroupsByPermissionQuery" parameterType="map" resultType="int">
@@ -70,12 +74,17 @@
     from (
     select g.id as group_id, g.name as name, gr.role as permission, gr.resource_id as resource_id, gr.id as id
     from groups g
-      left join group_roles gr on g.id = gr.group_id
-    UNION ALL
+    left join group_roles gr on g.id = gr.group_id
+    where g.organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
+
+    union all
+
     select 0 as group_id, 'Anyone' as name, gr.role as permission, gr.resource_id as resource_id, gr.id as id
     from group_roles gr
     <if test="query.withAtLeastOnePermission()">
-      where gr.group_id is null
+      where
+      gr.group_id is null and
+      gr.organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
     </if>
     ) gr
     left join projects p on gr.resource_id = p.id
@@ -99,28 +108,33 @@
     </where>
   </sql>
 
-  <select id="selectGroupPermissionByGroupNames" parameterType="map" resultType="GroupPermission">
+  <select id="selectByGroupIds" parameterType="map" resultType="GroupPermission">
     SELECT sub.id, sub.groupId, sub.resourceId, sub.role
     FROM
       (
-      SELECT gr.id AS id, gr.group_id AS groupId, gr.resource_id AS resourceId, gr.role AS role, g.name AS name
-      FROM group_roles gr
-      INNER JOIN groups g ON g.id=gr.group_id
-      UNION ALL
-      SELECT gr.id as id, 0 AS group_id, gr.resource_id AS resource_id, gr.role AS role, 'Anyone' AS name
-      FROM group_roles gr
-      WHERE gr.group_id is null
+      select gr.id as id, gr.group_id as groupId, gr.resource_id as resourceId, gr.role as role, g.name as name
+      from group_roles gr
+      inner join groups g ON g.id = gr.group_id
+      where g.organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
+
+      union all
+
+      select gr.id as id, 0 as groupId, gr.resource_id as resource_id, gr.role as role, 'Anyone' as name
+      from group_roles gr
+      where
+      gr.group_id is null and
+      gr.organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
       ) sub
     where
-      sub.name IN
-      <foreach collection="groupNames" open="(" close=")" item="name" separator=",">
-        #{name}
+      sub.groupId in
+      <foreach collection="groupIds" open="(" close=")" item="groupId" separator=",">
+        #{groupId,jdbcType=BIGINT}
       </foreach>
       <if test="projectId!=null">
-        AND sub.resourceId=#{projectId,jdbcType=BIGINT}
+        and sub.resourceId=#{projectId,jdbcType=BIGINT}
       </if>
       <if test="projectId==null">
-        AND sub.resourceId IS NULL
+        and sub.resourceId IS NULL
       </if>
   </select>
 

@@ -51,4 +51,6 @@ public interface GroupMapper {
   GroupDto selectByName(@Param("organizationUuid") String organizationUuid, @Param("name") String name);
 
   List<GroupDto> selectByOrganizationUuid(@Param("organizationUuid") String organizationUuid);
+
+  List<GroupDto> selectByIds(@Param("ids") List<Long> ids);
 }

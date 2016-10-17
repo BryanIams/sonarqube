@@ -76,6 +76,10 @@ public class GroupDao implements Dao {
     return mapper(dbSession).selectById(groupId);
   }
 
+  public List<GroupDto> selectByIds(DbSession dbSession, List<Long> ids) {
+    return executeLargeInputs(ids, mapper(dbSession)::selectByIds);
+  }
+
   public void deleteById(DbSession dbSession, long groupId) {
     mapper(dbSession).deleteById(groupId);
   }

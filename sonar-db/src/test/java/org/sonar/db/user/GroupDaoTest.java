@@ -41,6 +41,7 @@ import static org.sonar.db.user.GroupTesting.newGroupDto;
 public class GroupDaoTest {
 
   private static final long NOW = 1_500_000L;
+  private static final long MISSING_ID = -1L;
   private static final OrganizationDto AN_ORGANIZATION = new OrganizationDto()
     .setKey("an-org")
     .setName("An Org")
@@ -50,8 +51,8 @@ public class GroupDaoTest {
 
   @Rule
   public DbTester db = DbTester.create(system2);
-  private final DbSession dbSession = db.getSession();
-  private GroupDao underTest = new GroupDao(system2);
+  private DbSession dbSession = db.getSession();
+  private GroupDao underTest = db.getDbClient().groupDao();
 
   // not static as group id is changed in each test
   private final GroupDto aGroup = new GroupDto()
@@ -105,6 +106,21 @@ public class GroupDaoTest {
     assertThat(underTest.selectByNames(dbSession, singletonList("group1"))).hasSize(1);
     assertThat(underTest.selectByNames(dbSession, asList("group1", "unknown"))).hasSize(1);
     assertThat(underTest.selectByNames(dbSession, Collections.emptyList())).isEmpty();
+  }
+
+  @Test
+  public void selectByIds() {
+    GroupDto group1 = db.users().insertGroup();
+    GroupDto group2 = db.users().insertGroup();
+    GroupDto group3 = db.users().insertGroup();
+
+    assertThat(underTest.selectByIds(dbSession, asList(group1.getId(), group2.getId())))
+      .extracting(GroupDto::getId).containsOnly(group1.getId(), group2.getId());
+
+    assertThat(underTest.selectByIds(dbSession, asList(group1.getId(), MISSING_ID)))
+      .extracting(GroupDto::getId).containsOnly(group1.getId());
+
+    assertThat(underTest.selectByIds(dbSession, Collections.emptyList())).isEmpty();;
   }
 
   @Test
